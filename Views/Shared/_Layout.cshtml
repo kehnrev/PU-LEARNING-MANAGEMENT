@@ -149,12 +149,12 @@
                 else if (User.IsInRole("Teacher"))
                 {
                     <a asp-controller="Courses" asp-action="Index">My Courses</a>
-                    <a asp-controller="Lessons" asp-action="Index">Lessons</a>
+                    <a asp-controller="Lessons" asp-action="Create">Add Lecture / Lesson</a>
                     <a asp-controller="Assessments" asp-action="Index">Assessments</a>
-                    <a asp-controller="Submissions" asp-action="Index">Submissions</a>
-                    <a asp-controller="Enrollments" asp-action="Index">Enrollments</a>
-                    <a asp-controller="Announcements" asp-action="Index">Announcements</a>
+                    <a asp-controller="Teacher" asp-action="ClassList">Class List</a>
+                    <a asp-controller="Teacher" asp-action="StudentProgress">Student Progress</a>
                     <a asp-controller="Reports" asp-action="ClassPerformance">Reports</a>
+                    <a asp-controller="Announcements" asp-action="Index">Announcements</a>
                     <a asp-controller="Settings" asp-action="Appearance">Settings</a>
                 }
                 else

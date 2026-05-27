@@ -220,6 +220,24 @@ public static class SeedData
             context.Announcements.RemoveRange(legacyAnnouncements);
             await context.SaveChangesAsync();
         }
+
+        var seniorHighCourseTitles = GetCourseSeeds().Select(c => c.Title).ToList();
+        var legacyLessons = await context.Lessons
+            .Include(l => l.Course)
+            .Where(l =>
+                l.Course != null &&
+                l.Course.TeacherId == teacherId &&
+                seniorHighCourseTitles.Contains(l.Course.Title) &&
+                (l.Title.EndsWith(": Core Concepts") ||
+                 l.Title.EndsWith(": Guided Practice") ||
+                 l.Title.EndsWith(": Performance Task")))
+            .ToListAsync();
+
+        if (legacyLessons.Count > 0)
+        {
+            context.Lessons.RemoveRange(legacyLessons);
+            await context.SaveChangesAsync();
+        }
     }
 
     private static async Task RemoveAssessmentGraphAsync(ApplicationDbContext context, int assessmentId)
@@ -596,20 +614,38 @@ public static class SeedData
 
     private static IReadOnlyList<LessonSeed> BuildLessons(SeniorHighCourseSeed course, int courseIndex)
     {
+        var lectureTitles = GetLectureTitles(course.Title);
+
         return new List<LessonSeed>
         {
             new(
-                $"{course.Title}: Core Concepts",
-                $"This lesson introduces {course.CoreConcept} for {course.GradeLevel} learners. Students define the key terms, study a guided example, and connect the topic to SDG 4 by explaining how stronger learning support helps more learners participate.",
+                lectureTitles[0],
+                $"This lecture introduces {course.CoreConcept} for {course.GradeLevel} learners. Students define key terms, study a guided example, and connect the topic to quality education through practical classroom participation.",
                 true),
             new(
-                $"{course.Title}: Guided Practice",
+                lectureTitles[1],
                 $"Students practice {course.ClassroomApplication}. The activity includes a short teacher demonstration, pair work, and a checkpoint question that helps identify learners who need additional support.",
                 false),
             new(
-                $"{course.Title}: Performance Task",
+                lectureTitles[2],
                 $"Students complete a practical task: {course.PerformanceTask}. The output can be reviewed online or offline and contributes to the course completion progress shown in the learner dashboard.",
                 courseIndex % 2 == 0)
+        };
+    }
+
+    private static IReadOnlyList<string> GetLectureTitles(string courseTitle)
+    {
+        return courseTitle switch
+        {
+            "General Mathematics" => new[] { "Functions and Relations", "Simple and Compound Interest", "Basic Statistics" },
+            "Earth and Life Science" => new[] { "Earth Systems", "Rocks and Minerals", "Natural Hazards" },
+            "Oral Communication" => new[] { "Communication Process", "Verbal and Nonverbal Communication", "Public Speaking Basics" },
+            "Empowerment Technologies" => new[] { "ICT in Education", "Online Safety and Netiquette", "Productivity Tools" },
+            "Practical Research 2" => new[] { "Research Design", "Data Gathering Procedure", "Data Analysis and Interpretation" },
+            "Media and Information Literacy" => new[] { "Media Literacy Basics", "Evaluating Online Sources", "Responsible Media Use" },
+            "Entrepreneurship" => new[] { "Business Ideas and Opportunities", "Marketing Plan Basics", "Financial Planning" },
+            "Contemporary Philippine Arts" => new[] { "Philippine Art Forms", "Regional Artists", "Contemporary Art Appreciation" },
+            _ => new[] { $"{courseTitle} Overview", $"{courseTitle} Guided Practice", $"{courseTitle} Performance Task" }
         };
     }
 

@@ -1,0 +1,77 @@
+@model TeacherClassListViewModel
+@{
+    ViewData["Title"] = "Class List";
+}
+
+<div class="dashboard-heading">
+    <div>
+        <span class="eyebrow">Teacher workspace</span>
+        <h1>Class List</h1>
+    </div>
+    <a class="btn btn-primary" asp-controller="Teacher" asp-action="StudentProgress">View Student Progress</a>
+</div>
+
+<form class="toolbar-form" method="get">
+    <input class="form-control" name="search" value="@Model.Search" placeholder="Search students by name or email" />
+    <select class="form-select" name="courseId">
+        <option value="">All courses</option>
+        @foreach (var course in Model.Courses)
+        {
+            if (Model.CourseId == course.CourseId)
+            {
+                <option value="@course.CourseId" selected>@course.Title</option>
+            }
+            else
+            {
+                <option value="@course.CourseId">@course.Title</option>
+            }
+        }
+    </select>
+    <button class="btn btn-outline-primary" type="submit">Filter</button>
+</form>
+
+@if (!Model.Students.Any())
+{
+    <div class="empty-state">No students enrolled yet. Enrolled learners will appear here once they join your courses.</div>
+}
+else
+{
+    <section class="panel">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Email</th>
+                        <th>Course</th>
+                        <th>Average score</th>
+                        <th>Progress</th>
+                        <th>Missing assessments</th>
+                        <th>Performance status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var student in Model.Students)
+                    {
+                        <tr>
+                            <td>@student.StudentName</td>
+                            <td>@student.Email</td>
+                            <td>
+                                <strong>@student.CourseTitle</strong>
+                                <span class="d-block text-muted">@student.GradeLevel</span>
+                            </td>
+                            <td>@student.AverageScore.ToString("0.##")%</td>
+                            <td>@student.ProgressPercentage.ToString("0.##")%</td>
+                            <td>
+                                <span class="badge @(student.MissingAssessments > 0 ? "text-bg-warning" : "text-bg-success")">
+                                    @(student.MissingAssessments > 0 ? student.MissingAssessments.ToString() : "None")
+                                </span>
+                            </td>
+                            <td><span class="badge @PerformanceLabelHelper.GetBadgeClass(student.AverageScore)">@PerformanceLabelHelper.GetLabel(student.AverageScore)</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}

@@ -104,7 +104,7 @@ public class LessonsController : Controller
         {
             _context.Lessons.Add(lesson);
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Lesson saved.";
+            TempData["Success"] = "Lecture added successfully.";
             return RedirectToAction(nameof(Index), new { lesson.CourseId });
         }
         catch (Exception)
@@ -173,7 +173,7 @@ public class LessonsController : Controller
         {
             _context.Update(lesson);
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Lesson updated.";
+            TempData["Success"] = "Lecture / Lesson updated.";
             return RedirectToAction(nameof(Index), new { lesson.CourseId });
         }
         catch (Exception)
@@ -223,7 +223,7 @@ public class LessonsController : Controller
         {
             _context.Lessons.Remove(lesson);
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Lesson deleted.";
+            TempData["Success"] = "Lecture / Lesson deleted.";
         }
         catch (Exception)
         {

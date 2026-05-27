@@ -19,15 +19,19 @@
 <div class="quick-action-heading">Quick actions</div>
 <div class="quick-actions">
     <a class="btn btn-primary" asp-controller="Courses" asp-action="Create">Create Course</a>
-    <a class="btn btn-outline-primary" asp-controller="Lessons" asp-action="Create">Add Lesson</a>
+    <a class="btn btn-outline-primary" asp-controller="Lessons" asp-action="Create">Add Lecture / Lesson</a>
     <a class="btn btn-outline-primary" asp-controller="Assessments" asp-action="Create">Create Assessment</a>
-    <a class="btn btn-outline-primary" asp-controller="Reports" asp-action="ClassPerformance">View Reports</a>
+    <a class="btn btn-outline-primary" asp-controller="Teacher" asp-action="ClassList">Class List</a>
+    <a class="btn btn-outline-primary" asp-controller="Teacher" asp-action="StudentProgress">Student Progress</a>
+    <a class="btn btn-outline-primary" asp-controller="Reports" asp-action="ClassPerformance">Teacher Reports</a>
     <a class="btn btn-outline-primary" asp-controller="Announcements" asp-action="Create">Post Announcement</a>
 </div>
 
 <div class="stats-grid">
     <div class="stat-card"><span>My courses</span><strong>@Model.MyCourses</strong></div>
     <div class="stat-card"><span>Students enrolled</span><strong>@Model.TotalStudentsEnrolled</strong></div>
+    <div class="stat-card"><span>Total lessons</span><strong>@Model.TotalLessonsCreated</strong></div>
+    <div class="stat-card"><span>Total assessments</span><strong>@Model.TotalAssessmentsCreated</strong></div>
     <div class="stat-card"><span>Pending submissions</span><strong>@Model.PendingSubmissions</strong></div>
     <div class="stat-card"><span>Average class score</span><strong>@Model.AverageClassScore.ToString("0.##")%</strong></div>
     <div class="stat-card"><span>Class status</span><strong><span class="badge @PerformanceLabelHelper.GetBadgeClass(Model.AverageClassScore)">@PerformanceLabelHelper.GetLabel(Model.AverageClassScore)</span></strong></div>
@@ -77,22 +81,58 @@
     <canvas class="analytics-chart" data-chart="doughnut" data-title="Assessment Submission Status" data-labels="@submissionLabels" data-values="@submissionValues" data-empty="No submission status data yet." height="260"></canvas>
 </section>
 
-<section class="panel mt-4">
-    <h2>Recent assessments</h2>
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead><tr><th>Assessment</th><th>Course</th><th>Due</th><th></th></tr></thead>
-            <tbody>
-                @foreach (var item in Model.RecentAssessments)
-                {
-                    <tr>
-                        <td>@item.Title</td>
-                        <td>@item.Course?.Title</td>
-                        <td>@item.DueDate.ToString("MMM dd, yyyy")</td>
-                        <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-controller="Assessments" asp-action="Details" asp-route-id="@item.AssessmentId">Open</a></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</section>
+<div class="dashboard-grid mt-4">
+    <section class="panel">
+        <h2>Recent student submissions</h2>
+        @if (!Model.RecentSubmissions.Any())
+        {
+            <p class="empty-copy">No submissions yet. Student results will appear here after assessments are submitted.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Student</th><th>Assessment</th><th>Score</th><th>Date</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in Model.RecentSubmissions)
+                        {
+                            <tr>
+                                <td>@item.Student?.FullName</td>
+                                <td>@item.Assessment?.Title</td>
+                                <td><span class="badge @PerformanceLabelHelper.GetBadgeClass(item.Score)">@item.Score.ToString("0.##")%</span></td>
+                                <td>@item.SubmittedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="panel">
+        <h2>Upcoming assessments</h2>
+        @if (!Model.UpcomingAssessments.Any())
+        {
+            <p class="empty-copy">No upcoming assessments yet. Create a quiz when the next lesson is ready.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Assessment</th><th>Course</th><th>Due</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var item in Model.UpcomingAssessments)
+                        {
+                            <tr>
+                                <td>@item.Title</td>
+                                <td>@item.Course?.Title</td>
+                                <td>@item.DueDate.ToString("MMM dd, yyyy")</td>
+                                <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-controller="Assessments" asp-action="Details" asp-route-id="@item.AssessmentId">Open</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>

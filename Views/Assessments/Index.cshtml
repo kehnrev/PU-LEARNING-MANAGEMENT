@@ -4,6 +4,7 @@
     ViewData["Title"] = "Assessments";
     var currentStudentId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsedStudentId) ? parsedStudentId : 0;
     var isStudent = User.IsInRole("Student");
+    var canManageAssessments = User.IsInRole("Admin") || User.IsInRole("Teacher");
 }
 
 <div class="dashboard-heading">
@@ -31,21 +32,51 @@ else
 {
     <div class="table-responsive panel">
         <table class="table align-middle">
-            <thead><tr><th>Title</th><th>Course</th><th>Questions</th><th>Due</th>@if (isStudent) { <th>Status</th> }<th>Offline</th><th></th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Course</th>
+                    <th>Questions</th>
+                    @if (canManageAssessments)
+                    {
+                        <th>Total points</th>
+                        <th>Submissions</th>
+                    }
+                    <th>Due</th>
+                    @if (isStudent || canManageAssessments) { <th>Status</th> }
+                    <th>Offline</th>
+                    <th></th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var item in Model)
                 {
                     var submission = item.Submissions.FirstOrDefault(s => s.StudentId == currentStudentId);
                     var isCompleted = submission != null;
+                    var assessmentStatus = item.DueDate.Date < DateTime.UtcNow.Date
+                        ? "Closed"
+                        : item.Submissions.Any() ? "Active" : "Upcoming";
+                    var assessmentStatusClass = assessmentStatus == "Closed"
+                        ? "text-bg-secondary"
+                        : assessmentStatus == "Active" ? "text-bg-success" : "text-bg-primary";
 
                     <tr>
                         <td>@item.Title</td>
                         <td>@item.Course?.Title</td>
                         <td>@item.Questions.Count</td>
+                        @if (canManageAssessments)
+                        {
+                            <td>@item.TotalPoints</td>
+                            <td>@item.Submissions.Count</td>
+                        }
                         <td>@item.DueDate.ToString("MMM dd, yyyy")</td>
                         @if (isStudent)
                         {
                             <td><span class="badge @(isCompleted ? "text-bg-success" : "text-bg-primary")">@(isCompleted ? "Completed" : "Upcoming")</span></td>
+                        }
+                        else if (canManageAssessments)
+                        {
+                            <td><span class="badge @assessmentStatusClass">@assessmentStatus</span></td>
                         }
                         <td><span class="badge @(item.IsAvailableOffline ? "text-bg-success" : "text-bg-secondary")">@(item.IsAvailableOffline ? "Available Offline" : "Online Only")</span></td>
                         <td class="text-end">

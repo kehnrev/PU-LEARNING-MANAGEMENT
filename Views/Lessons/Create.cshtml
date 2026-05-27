@@ -1,12 +1,12 @@
 @model Lesson
 @{
-    ViewData["Title"] = "Add Lesson";
+    ViewData["Title"] = "Add Lecture / Lesson";
 }
 
 <div class="dashboard-heading">
     <div>
         <span class="eyebrow">Learning materials</span>
-        <h1>Add lesson</h1>
+        <h1>Add Lecture / Lesson</h1>
     </div>
     <a class="btn btn-outline-primary" asp-action="Index" asp-route-courseId="@Model.CourseId">Back</a>
 </div>
@@ -15,7 +15,10 @@
     <form asp-action="Create" method="post" novalidate>
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <partial name="_LessonForm" model="Model" />
-        <button class="btn btn-primary mt-4" type="submit">Save Lesson</button>
+        <div class="button-row mt-4">
+            <button class="btn btn-primary" type="submit">Save Lecture / Lesson</button>
+            <a class="btn btn-outline-primary" asp-action="Index" asp-route-courseId="@Model.CourseId">Cancel</a>
+        </div>
     </form>
 </section>
 

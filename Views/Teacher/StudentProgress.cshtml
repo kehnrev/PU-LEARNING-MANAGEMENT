@@ -1,0 +1,167 @@
+@using System.Globalization
+@model TeacherStudentProgressViewModel
+@{
+    ViewData["Title"] = "Student Progress";
+    var progressLabels = string.Join(",", Model.CourseProgress.Keys.Select(ChartLabelHelper.GetShortCourseLabel));
+    var progressFullLabels = string.Join(",", Model.CourseProgress.Keys);
+    var progressValues = string.Join(",", Model.CourseProgress.Values.Select(v => v.ToString("0.##", CultureInfo.InvariantCulture)));
+    var missingLabels = string.Join(",", Model.MissingSubmissionsByCourse.Keys.Select(ChartLabelHelper.GetShortCourseLabel));
+    var missingFullLabels = string.Join(",", Model.MissingSubmissionsByCourse.Keys);
+    var missingValues = string.Join(",", Model.MissingSubmissionsByCourse.Values);
+}
+
+<div class="dashboard-heading">
+    <div>
+        <span class="eyebrow">Teacher analytics</span>
+        <h1>Student Progress</h1>
+    </div>
+    <a class="btn btn-outline-primary" asp-controller="Teacher" asp-action="ClassList">Open Class List</a>
+</div>
+
+<form class="toolbar-form" method="get">
+    <input class="form-control" name="search" value="@Model.Search" placeholder="Search students by name or email" />
+    <select class="form-select" name="courseId">
+        <option value="">All courses</option>
+        @foreach (var course in Model.Courses)
+        {
+            if (Model.CourseId == course.CourseId)
+            {
+                <option value="@course.CourseId" selected>@course.Title</option>
+            }
+            else
+            {
+                <option value="@course.CourseId">@course.Title</option>
+            }
+        }
+    </select>
+    <button class="btn btn-outline-primary" type="submit">Filter</button>
+</form>
+
+<div class="stats-grid">
+    <div class="stat-card"><span>Total students</span><strong>@Model.TotalStudents</strong></div>
+    <div class="stat-card"><span>Class average</span><strong>@Model.ClassAverage.ToString("0.##")%</strong></div>
+    <div class="stat-card"><span>Missing submissions</span><strong>@Model.MissingSubmissions</strong></div>
+    <div class="stat-card"><span>Need support</span><strong>@Model.StudentsNeedingSupport</strong></div>
+    <div class="stat-card"><span>Class status</span><strong><span class="badge @PerformanceLabelHelper.GetBadgeClass(Model.ClassAverage)">@PerformanceLabelHelper.GetLabel(Model.ClassAverage)</span></strong></div>
+</div>
+
+<div class="dashboard-grid">
+    <section class="panel">
+        <h2>Course progress</h2>
+        <canvas class="analytics-chart" data-chart="horizontalBar" data-title="Course Progress" data-labels="@progressLabels" data-full-labels="@progressFullLabels" data-values="@progressValues" data-scale-max="100" data-tooltip-label="Progress" data-empty="No progress data yet. Enroll students and complete assessments to generate progress." height="340"></canvas>
+    </section>
+    <section class="panel">
+        <h2>Missing submissions</h2>
+        <canvas class="analytics-chart" data-chart="horizontalBar" data-title="Missing Submissions by Course" data-labels="@missingLabels" data-full-labels="@missingFullLabels" data-values="@missingValues" data-tooltip-label="Missing" data-empty="No missing submissions found." height="340"></canvas>
+    </section>
+</div>
+
+<section class="panel mt-4">
+    <h2>Students Needing Support</h2>
+    @if (!Model.SupportRows.Any())
+    {
+        <p class="empty-copy">No students currently need academic support based on the available scores, progress, and submissions.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Average score</th>
+                        <th>Progress</th>
+                        <th>Missing</th>
+                        <th>Suggested action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var student in Model.SupportRows)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@student.StudentName</strong>
+                                <span class="d-block text-muted">@student.Email</span>
+                            </td>
+                            <td>@student.CourseTitle</td>
+                            <td><span class="badge @PerformanceLabelHelper.GetBadgeClass(student.AverageScore)">@student.AverageScore.ToString("0.##")%</span></td>
+                            <td>@student.ProgressPercentage.ToString("0.##")%</td>
+                            <td>@student.MissingAssessments</td>
+                            <td>@student.SuggestedAction</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<section class="panel mt-4">
+    <h2>Student performance</h2>
+    @if (!Model.StudentPerformance.Any())
+    {
+        <p class="empty-copy">No performance data yet. Student scores will appear here after assessments are submitted.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Average score</th>
+                        <th>Course progress</th>
+                        <th>Missing submissions</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.StudentPerformance)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@row.StudentName</strong>
+                                <span class="d-block text-muted">@row.Email</span>
+                            </td>
+                            <td>@row.CourseTitle</td>
+                            <td>@row.AverageScore.ToString("0.##")%</td>
+                            <td>@row.ProgressPercentage.ToString("0.##")%</td>
+                            <td>@row.MissingAssessments</td>
+                            <td><span class="badge @PerformanceLabelHelper.GetBadgeClass(row.AverageScore)">@PerformanceLabelHelper.GetLabel(row.AverageScore)</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<section class="panel mt-4">
+    <h2>Recent scores</h2>
+    @if (!Model.RecentSubmissions.Any())
+    {
+        <p class="empty-copy">No recent scores yet. Results will appear after students complete assessments.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead><tr><th>Student</th><th>Course</th><th>Assessment</th><th>Score</th><th>Date</th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.RecentSubmissions)
+                    {
+                        <tr>
+                            <td>@item.Student?.FullName</td>
+                            <td>@item.Assessment?.Course?.Title</td>
+                            <td>@item.Assessment?.Title</td>
+                            <td><span class="badge @PerformanceLabelHelper.GetBadgeClass(item.Score)">@item.Score.ToString("0.##")%</span></td>
+                            <td>@item.SubmittedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

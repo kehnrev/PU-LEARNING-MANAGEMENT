@@ -1,12 +1,12 @@
 @model Lesson
 @{
-    ViewData["Title"] = "Edit Lesson";
+    ViewData["Title"] = "Edit Lecture / Lesson";
 }
 
 <div class="dashboard-heading">
     <div>
         <span class="eyebrow">Learning materials</span>
-        <h1>Edit lesson</h1>
+        <h1>Edit Lecture / Lesson</h1>
     </div>
     <a class="btn btn-outline-primary" asp-action="Details" asp-route-id="@Model.LessonId">Back</a>
 </div>
@@ -16,7 +16,7 @@
         <input asp-for="LessonId" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <partial name="_LessonForm" model="Model" />
-        <button class="btn btn-primary mt-4" type="submit">Update Lesson</button>
+        <button class="btn btn-primary mt-4" type="submit">Update Lecture / Lesson</button>
     </form>
 </section>
 

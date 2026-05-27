@@ -2,31 +2,31 @@
 
 <div class="row g-3">
     <div class="col-md-6">
-        <label asp-for="CourseId" class="form-label"></label>
+        <label asp-for="CourseId" class="form-label">Select Course</label>
         <select asp-for="CourseId" class="form-select" asp-items="ViewBag.Courses">
             <option value="">Choose course</option>
         </select>
         <span asp-validation-for="CourseId" class="text-danger"></span>
     </div>
     <div class="col-md-6">
-        <label asp-for="Title" class="form-label"></label>
+        <label asp-for="Title" class="form-label">Lecture Title</label>
         <input asp-for="Title" class="form-control" />
         <span asp-validation-for="Title" class="text-danger"></span>
     </div>
     <div class="col-12">
-        <label asp-for="Content" class="form-label"></label>
+        <label asp-for="Content" class="form-label">Lecture Content</label>
         <textarea asp-for="Content" class="form-control" rows="8"></textarea>
         <span asp-validation-for="Content" class="text-danger"></span>
     </div>
     <div class="col-md-8">
-        <label asp-for="FilePath" class="form-label"></label>
+        <label asp-for="FilePath" class="form-label">Learning Material Link or File Path</label>
         <input asp-for="FilePath" class="form-control" placeholder="/uploads/lesson.pdf" />
         <span asp-validation-for="FilePath" class="text-danger"></span>
     </div>
     <div class="col-md-4 d-flex align-items-end">
         <div class="form-check">
             <input asp-for="IsAvailableOffline" class="form-check-input" />
-            <label asp-for="IsAvailableOffline" class="form-check-label"></label>
+            <label asp-for="IsAvailableOffline" class="form-check-label">Available Offline</label>
         </div>
     </div>
 </div>

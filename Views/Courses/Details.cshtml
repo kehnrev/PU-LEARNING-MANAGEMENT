@@ -13,7 +13,7 @@
         <a class="btn btn-outline-primary" asp-action="Index">Back</a>
         @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
         {
-            <a class="btn btn-primary" asp-controller="Lessons" asp-action="Create" asp-route-courseId="@Model.CourseId">Add Lesson</a>
+            <a class="btn btn-primary" asp-controller="Lessons" asp-action="Create" asp-route-courseId="@Model.CourseId">Add Lecture / Lesson</a>
             <a class="btn btn-primary" asp-controller="Assessments" asp-action="Create" asp-route-courseId="@Model.CourseId">Add Assessment</a>
         }
     </div>
