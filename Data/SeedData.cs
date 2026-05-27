@@ -49,6 +49,8 @@ public static class SeedData
             await EnsureUserAsync(context, passwordHasher, "Jamie Cruz", "student2@edutrack.local", UserRole.Student, "Student123!");
             await EnsureUserAsync(context, passwordHasher, "Taylor Lim", "student3@edutrack.local", UserRole.Student, "Student123!");
             await EnsureUserAsync(context, passwordHasher, "Rina Bautista", "student4@edutrack.local", UserRole.Student, "Student123!");
+            await EnsureUserAsync(context, passwordHasher, "Jastin Percunod", "jastin.percunod@edutrack.local", UserRole.Student, "Student123!");
+            await EnsureUserAsync(context, passwordHasher, "Kurt Recto", "kurt.recto@edutrack.local", UserRole.Student, "Student123!");
             await context.SaveChangesAsync();
 
             await RemoveLegacyDemoDataAsync(context, teacher.Id);

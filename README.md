@@ -45,7 +45,7 @@ The grade filter intentionally shows only All grades, Grade 11, and Grade 12.
 | Teacher | teacher@edutrack.local | Teacher123! |
 | Student | student@edutrack.local | Student123! |
 
-Extra sample student accounts are seeded for class analytics and reports. Existing active student accounts are also enrolled in the demo courses.
+Extra sample student accounts are seeded for class analytics and reports, including Jastin Percunod and Kurt Recto. Existing active student accounts are also enrolled in the demo courses.
 
 ## System Roles
 
