@@ -25,7 +25,20 @@
     <p class="lesson-content" id="lessonContent">@Model.Content</p>
     @if (!string.IsNullOrWhiteSpace(Model.FilePath))
     {
-        <p><strong>File:</strong> @Model.FilePath</p>
+        <div class="material-panel">
+            <strong>Learning Material:</strong>
+            <a class="btn btn-sm btn-outline-primary" asp-action="Material" asp-route-id="@Model.LessonId" target="_blank" rel="noopener">
+                @(string.IsNullOrWhiteSpace(Model.OriginalFileName) ? "View Material" : Model.OriginalFileName)
+            </a>
+            @if (Model.FileSize.HasValue)
+            {
+                <span class="text-muted">@((Model.FileSize.Value / 1024m / 1024m).ToString("0.##")) MB</span>
+            }
+            @if (Model.IsAvailableOffline)
+            {
+                <p class="form-text mb-0">Download this material while online to access it offline.</p>
+            }
+        </div>
     }
     @if (Model.IsAvailableOffline)
     {

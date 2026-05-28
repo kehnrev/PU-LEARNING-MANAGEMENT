@@ -16,7 +16,7 @@
     <a class="btn btn-primary" asp-controller="Admin" asp-action="CreateUser">Create User</a>
 </div>
 
-<div class="stats-grid">
+<div class="stats-grid" data-dashboard-section="System Statistics">
     <div class="stat-card"><span>Total students</span><strong>@Model.TotalStudents</strong></div>
     <div class="stat-card"><span>Total teachers</span><strong>@Model.TotalTeachers</strong></div>
     <div class="stat-card"><span>Total courses</span><strong>@Model.TotalCourses</strong></div>
@@ -25,9 +25,12 @@
     <div class="stat-card"><span>Pending sync</span><strong>@Model.PendingSyncSubmissions</strong></div>
 </div>
 
-<div class="alert alert-info">
-    <strong>Demo Data:</strong> This presentation build includes Grade 11 and Grade 12 sample users, courses, lessons, assessments, submissions, announcements, and reports.
-</div>
+@if (ViewBag.ShowDemoDataNotice != false)
+{
+    <div class="alert alert-info">
+        <strong>Demo Data:</strong> This presentation build includes Grade 11 and Grade 12 sample users, courses, lessons, assessments, submissions, announcements, and reports.
+    </div>
+}
 
 <section class="notification-strip" aria-label="Admin notifications">
     <div><strong>Announcement posted</strong><span>Three demo announcements are available for presentation.</span></div>
@@ -36,11 +39,11 @@
 </section>
 
 <div class="dashboard-grid">
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Overall Performance">
         <h2>Overall Student Performance</h2>
         <canvas class="analytics-chart" data-chart="bar" data-title="Overall Student Performance" data-labels="Average,Target" data-full-labels="Overall Average,Target Score" data-values="@Model.OverallAveragePerformance,75" data-scale-max="100" data-tooltip-label="Score" data-empty="No student performance data yet." height="260"></canvas>
     </section>
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Announcements">
         <h2>Recent announcements</h2>
         @if (!Model.RecentAnnouncements.Any())
         {
@@ -62,11 +65,11 @@
 </div>
 
 <div class="dashboard-grid mt-4">
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Reports Summary">
         <h2>Course Enrollment Summary</h2>
         <canvas class="analytics-chart" data-chart="horizontalBar" data-title="Course Enrollment Summary" data-labels="@enrollmentLabels" data-full-labels="@enrollmentFullLabels" data-values="@enrollmentValues" data-empty="No enrollment data yet." height="320"></canvas>
     </section>
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Overall Performance">
         <h2>Pass/Fail Distribution</h2>
         <canvas class="analytics-chart" data-chart="doughnut" data-title="Pass and Fail Distribution" data-labels="@passFailLabels" data-values="@passFailValues" data-empty="No pass/fail data yet." height="260"></canvas>
     </section>

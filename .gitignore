@@ -13,6 +13,7 @@ App_Data/DataProtectionKeys/
 App_Data/*.db
 App_Data/*.sqlite
 App_Data/*.sqlite3
+wwwroot/uploads/lessons/
 
 *.user
 *.suo

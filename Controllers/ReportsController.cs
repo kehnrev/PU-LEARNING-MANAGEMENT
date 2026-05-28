@@ -50,7 +50,8 @@ public class ReportsController : Controller
         }
 
         var rows = await submissions.OrderByDescending(s => s.SubmittedAt).ToListAsync();
-        ViewBag.Summary = BuildSummary("Student Performance Report", rows);
+        var settings = await LoadReportSettingsAsync();
+        ViewBag.Summary = BuildSummary("Student Performance Report", rows, settings.DefaultPassingScore);
         return View(rows);
     }
 
@@ -80,7 +81,8 @@ public class ReportsController : Controller
         }
 
         var rows = await submissions.OrderBy(s => s.Assessment!.Course!.Title).ThenBy(s => s.Student!.FullName).ToListAsync();
-        ViewBag.Summary = BuildSummary("Class Performance Report", rows);
+        var settings = await LoadReportSettingsAsync();
+        ViewBag.Summary = BuildSummary("Class Performance Report", rows, settings.DefaultPassingScore);
         return View(rows);
     }
 
@@ -110,6 +112,7 @@ public class ReportsController : Controller
         }
 
         var rows = await enrollments.OrderBy(e => e.Course!.Title).ThenBy(e => e.Student!.FullName).ToListAsync();
+        ViewBag.ReportSettings = await LoadReportSettingsAsync();
         ViewBag.GeneratedAt = DateTime.Now;
         ViewBag.AverageCompletion = rows.Count == 0 ? 0 : Math.Round(rows.Average(e => e.CompletionPercentage), 2);
         return View(rows);
@@ -141,11 +144,12 @@ public class ReportsController : Controller
         }
 
         var rows = await submissions.OrderByDescending(s => s.SubmittedAt).ToListAsync();
-        ViewBag.Summary = BuildSummary("Assessment Result Report", rows);
+        var settings = await LoadReportSettingsAsync();
+        ViewBag.Summary = BuildSummary("Assessment Result Report", rows, settings.DefaultPassingScore);
         return View(rows);
     }
 
-    private static ReportSummaryViewModel BuildSummary(string title, IReadOnlyCollection<Submission> submissions)
+    private static ReportSummaryViewModel BuildSummary(string title, IReadOnlyCollection<Submission> submissions, int passingScore)
     {
         return new ReportSummaryViewModel
         {
@@ -153,9 +157,25 @@ public class ReportsController : Controller
             DateGenerated = DateTime.Now,
             TotalRows = submissions.Count,
             AverageScore = submissions.Count == 0 ? 0 : Math.Round(submissions.Average(s => s.Score), 2),
-            PassedCount = submissions.Count(s => s.Score >= 75),
-            FailedCount = submissions.Count(s => s.Score < 75)
+            PassedCount = submissions.Count(s => s.Score >= passingScore),
+            FailedCount = submissions.Count(s => s.Score < passingScore)
         };
+    }
+
+    private async Task<UserSettings> LoadReportSettingsAsync()
+    {
+        var userId = User.GetUserId();
+        var settings = await _context.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
+
+        if (settings == null)
+        {
+            settings = UserSettings.CreateDefault(userId);
+            _context.UserSettings.Add(settings);
+            await _context.SaveChangesAsync();
+        }
+
+        ViewBag.ReportSettings = settings;
+        return settings;
     }
 
     private async Task LoadStudentSelectListAsync(int? selectedId)

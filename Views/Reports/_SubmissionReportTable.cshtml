@@ -1,14 +1,19 @@
 @model IEnumerable<Submission>
+@{
+    var settings = ViewBag.ReportSettings as UserSettings;
+    var showPerformance = settings?.IncludePerformanceLabelsInReports ?? true;
+    var compact = settings?.CompactPrintLayout ?? false;
+}
 
-<section class="panel">
+<section class="panel @(compact ? "report-compact" : string.Empty)">
     <div class="table-responsive">
         <table class="table align-middle">
-            <thead><tr><th>Student</th><th>Course</th><th>Assessment</th><th>Score</th><th>Total points</th><th>Percentage</th><th>Performance</th><th>Status</th><th>Submitted</th></tr></thead>
+            <thead><tr><th>Student</th><th>Course</th><th>Assessment</th><th>Score</th><th>Total points</th><th>Percentage</th>@if (showPerformance) { <th>Performance</th> }<th>Status</th><th>Submitted</th></tr></thead>
             <tbody>
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="9" class="text-center text-muted">No reports generated yet. Complete assessments first to view performance reports.</td>
+                        <td colspan="@(showPerformance ? 9 : 8)" class="text-center text-muted">No reports generated yet. Complete assessments first to view performance reports.</td>
                     </tr>
                 }
                 @foreach (var row in Model)
@@ -23,7 +28,10 @@
                         <td>@scorePoints.ToString("0.##")</td>
                         <td>@totalPoints</td>
                         <td>@row.Score.ToString("0.##")%</td>
-                        <td><span class="badge @PerformanceLabelHelper.GetBadgeClass(row.Score)">@PerformanceLabelHelper.GetLabel(row.Score)</span></td>
+                        @if (showPerformance)
+                        {
+                            <td><span class="badge @PerformanceLabelHelper.GetBadgeClass(row.Score)">@PerformanceLabelHelper.GetLabel(row.Score)</span></td>
+                        }
                         <td>@row.Status</td>
                         <td>@row.SubmittedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
                     </tr>

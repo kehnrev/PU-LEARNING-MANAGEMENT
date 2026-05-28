@@ -81,7 +81,19 @@ public class AssessmentsController : Controller
     public async Task<IActionResult> Create(int? courseId)
     {
         await LoadCoursesAsync(courseId);
-        return View(new Assessment { CourseId = courseId ?? 0, DueDate = DateTime.UtcNow.AddDays(7) });
+        var assessment = new Assessment { CourseId = courseId ?? 0, DueDate = DateTime.UtcNow.AddDays(7) };
+
+        if (User.IsInRole("Teacher"))
+        {
+            var settings = await GetCurrentUserSettingsAsync();
+            assessment.Instructions = $"Answer all questions. Time limit: {settings.DefaultAssessmentDuration} minutes. Passing score: {settings.DefaultPassingScore}%.";
+            ViewBag.DefaultPassingScore = settings.DefaultPassingScore;
+            ViewBag.DefaultAssessmentDuration = settings.DefaultAssessmentDuration;
+            ViewBag.AllowLateSubmissions = settings.AllowLateSubmissions;
+            ViewBag.AutoPublishScores = settings.AutoPublishScores;
+        }
+
+        return View(assessment);
     }
 
     [HttpPost]
@@ -475,5 +487,21 @@ public class AssessmentsController : Controller
         }
 
         ViewBag.Courses = new SelectList(await courses.ToListAsync(), "CourseId", "Title", selectedCourseId);
+    }
+
+    private async Task<UserSettings> GetCurrentUserSettingsAsync()
+    {
+        var userId = User.GetUserId();
+        var settings = await _context.UserSettings.FirstOrDefaultAsync(s => s.UserId == userId);
+
+        if (settings != null)
+        {
+            return settings;
+        }
+
+        settings = UserSettings.CreateDefault(userId);
+        _context.UserSettings.Add(settings);
+        await _context.SaveChangesAsync();
+        return settings;
     }
 }

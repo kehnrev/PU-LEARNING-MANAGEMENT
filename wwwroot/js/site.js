@@ -29,8 +29,30 @@
       layoutStyle: "Comfortable",
       sidebarState: "Expanded",
       fontSize: "Medium",
-      cardStyle: "Default"
+      cardStyle: "Default",
+      highContrastMode: false,
+      reduceAnimations: false,
+      readableSpacing: true,
+      showOfflineBanner: true,
+      autoSyncWhenOnline: true,
+      showSyncSuccessMessage: true,
+      enableOfflineSyncNotifications: true,
+      lowDataMode: false,
+      enableOfflineMode: true,
+      studentDashboardPriority: "Upcoming Assessments",
+      teacherDashboardPriority: "Students Needing Support",
+      adminDashboardPriority: "System Statistics"
     };
+  }
+
+  function toBoolean(value, fallback) {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") {
+      if (value.toLowerCase() === "true") return true;
+      if (value.toLowerCase() === "false") return false;
+    }
+
+    return fallback;
   }
 
   function normalizeAppearance(settings) {
@@ -39,15 +61,32 @@
     const valid = {
       themeMode: ["Light", "Dark", "System"],
       layoutStyle: ["Comfortable", "Compact"],
-      sidebarState: ["Expanded", "Collapsed"],
+      sidebarState: ["Expanded", "Collapsed", "Hidden"],
       fontSize: ["Small", "Medium", "Large"],
-      cardStyle: ["Default", "Minimal"]
+      cardStyle: ["Default", "Minimal"],
+      studentDashboardPriority: ["Upcoming Assessments", "Recent Scores", "Course Progress", "Offline Lessons", "Announcements"],
+      teacherDashboardPriority: ["Students Needing Support", "Pending Submissions", "Recent Submissions", "Upcoming Assessments", "Class Performance"],
+      adminDashboardPriority: ["System Statistics", "Recent Users", "Reports Summary", "Announcements", "Overall Performance"]
     };
 
     Object.keys(valid).forEach((key) => {
       if (!valid[key].includes(next[key])) {
         next[key] = defaults[key];
       }
+    });
+
+    [
+      "highContrastMode",
+      "reduceAnimations",
+      "readableSpacing",
+      "showOfflineBanner",
+      "autoSyncWhenOnline",
+      "showSyncSuccessMessage",
+      "enableOfflineSyncNotifications",
+      "lowDataMode",
+      "enableOfflineMode"
+    ].forEach((key) => {
+      next[key] = toBoolean(next[key], defaults[key]);
     });
 
     return next;
@@ -71,6 +110,10 @@
     root.dataset.sidebarState = normalized.sidebarState.toLowerCase();
     root.dataset.fontSize = normalized.fontSize.toLowerCase();
     root.dataset.cardStyle = normalized.cardStyle.toLowerCase();
+    root.dataset.highContrast = normalized.highContrastMode ? "true" : "false";
+    root.dataset.reduceAnimations = normalized.reduceAnimations ? "true" : "false";
+    root.dataset.readableSpacing = normalized.readableSpacing ? "true" : "false";
+    root.dataset.lowDataMode = normalized.lowDataMode ? "true" : "false";
 
     const toggle = document.getElementById("themeToggle");
     if (toggle) {
@@ -83,17 +126,51 @@
     }
 
     requestAnimationFrame(drawCharts);
+    requestAnimationFrame(() => applyDashboardPreference(normalized));
+    updateSidebarToggle(normalized);
   }
 
   function getSettingsFromForm(form) {
     const data = new FormData(form);
+    const readChecked = (name) => data.get(name) === "true";
+
     return normalizeAppearance({
       themeMode: data.get("ThemeMode"),
       layoutStyle: data.get("LayoutStyle"),
       sidebarState: data.get("SidebarState"),
       fontSize: data.get("FontSize"),
-      cardStyle: data.get("CardStyle")
+      cardStyle: data.get("CardStyle"),
+      highContrastMode: readChecked("HighContrastMode"),
+      reduceAnimations: readChecked("ReduceAnimations"),
+      readableSpacing: readChecked("ReadableSpacing"),
+      showOfflineBanner: readChecked("ShowOfflineBanner"),
+      autoSyncWhenOnline: readChecked("AutoSyncWhenOnline"),
+      showSyncSuccessMessage: readChecked("ShowSyncSuccessMessage"),
+      enableOfflineSyncNotifications: readChecked("EnableOfflineSyncNotifications"),
+      lowDataMode: readChecked("LowDataMode"),
+      enableOfflineMode: readChecked("EnableOfflineMode"),
+      studentDashboardPriority: data.get("StudentDashboardPriority"),
+      teacherDashboardPriority: data.get("TeacherDashboardPriority"),
+      adminDashboardPriority: data.get("AdminDashboardPriority")
     });
+  }
+
+  function applyDashboardPreference(settings) {
+    const role = document.body.dataset.role;
+    const priority = role === "Admin"
+      ? settings.adminDashboardPriority
+      : role === "Teacher" ? settings.teacherDashboardPriority : settings.studentDashboardPriority;
+
+    if (!priority) return;
+
+    const escapedPriority = window.CSS && CSS.escape
+      ? CSS.escape(priority)
+      : String(priority).replace(/"/g, '\\"');
+    const target = document.querySelector(`[data-dashboard-section="${escapedPriority}"]`);
+    const parent = target?.parentElement;
+    if (!target || !parent) return;
+
+    parent.insertBefore(target, parent.firstElementChild);
   }
 
   function setupAppearanceSettings() {
@@ -148,9 +225,61 @@
     });
   }
 
+  function updateSidebarToggle(settings) {
+    const toggle = document.getElementById("sidebarToggle");
+    if (!toggle) return;
+
+    const isHidden = settings.sidebarState === "Hidden";
+    toggle.textContent = isHidden ? "Show Menu" : "Hide Menu";
+    toggle.setAttribute("aria-expanded", String(!isHidden));
+  }
+
+  function setupSidebarToggle() {
+    const toggle = document.getElementById("sidebarToggle");
+    if (!toggle) return;
+
+    const saved = readJson(appearanceKey, {});
+    if (!saved.sidebarState && window.innerWidth <= 900) {
+      const settings = getAppearanceSettings();
+      settings.sidebarState = "Hidden";
+      applyAppearance(settings);
+    }
+
+    toggle.addEventListener("click", async () => {
+      const settings = getAppearanceSettings();
+      settings.sidebarState = settings.sidebarState === "Hidden" ? "Expanded" : "Hidden";
+      applyAppearance(settings);
+
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+      if (document.body.dataset.authenticated !== "true" || !token) return;
+
+      try {
+        await fetch("/Settings/QuickSidebar", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "RequestVerificationToken": token
+          },
+          body: JSON.stringify({ sidebarState: settings.sidebarState })
+        });
+      } catch {
+        showToast("Menu preference saved on this device.");
+      }
+    });
+  }
+
   function updateConnectionBanner() {
     const banner = document.getElementById("connectionBanner");
     if (!banner) return;
+
+    const settings = getAppearanceSettings();
+    if (!settings.showOfflineBanner || !settings.enableOfflineMode) {
+      banner.hidden = true;
+      return;
+    }
+
+    banner.hidden = false;
 
     if (navigator.onLine) {
       banner.textContent = "Online Mode";
@@ -164,6 +293,7 @@
   }
 
   async function registerServiceWorker() {
+    if (!getAppearanceSettings().enableOfflineMode) return;
     if (!("serviceWorker" in navigator)) return;
 
     try {
@@ -179,6 +309,12 @@
     const content = document.getElementById("lessonContent");
 
     if (!button || !reader || !content) return;
+
+    if (!getAppearanceSettings().autoSaveOfflineLessons) {
+      button.disabled = true;
+      button.textContent = "Offline Save Disabled";
+      return;
+    }
 
     button.addEventListener("click", async () => {
       const lessons = readJson(lessonsKey, []);
@@ -334,11 +470,15 @@
 
   async function syncPendingSubmissions() {
     if (!navigator.onLine) return;
+    const settings = getAppearanceSettings();
+    if (!settings.enableOfflineMode || !settings.autoSyncWhenOnline) return;
 
     const pending = readJson(pendingKey, []);
     if (!pending.length) return;
 
-    showToast("You are back online. Syncing your data...");
+    if (settings.enableOfflineSyncNotifications !== false) {
+      showToast("You are back online. Syncing your data...");
+    }
     const remaining = [];
 
     for (const item of pending) {
@@ -369,7 +509,7 @@
 
     writeJson(pendingKey, remaining);
 
-    if (remaining.length === 0) {
+    if (remaining.length === 0 && settings.showSyncSuccessMessage) {
       showToast("Offline submissions synced successfully.");
     }
   }
@@ -694,6 +834,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     setupAppearanceSettings();
+    setupSidebarToggle();
     updateConnectionBanner();
     registerServiceWorker();
     setupOfflineLessonSave();

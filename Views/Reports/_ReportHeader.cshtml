@@ -1,10 +1,17 @@
 @model ReportSummaryViewModel
+@{
+    var settings = ViewBag.ReportSettings as UserSettings;
+}
 
-<section class="report-header">
+<section class="report-header @(settings?.CompactPrintLayout == true ? "report-compact" : string.Empty)">
     <div>
         <span class="eyebrow">Printable report</span>
         <h1>@Model?.Title</h1>
         <p>Date generated: @Model?.DateGenerated.ToString("MMM dd, yyyy h:mm tt")</p>
+        @if (settings?.IncludeTeacherRemarksInReports == true)
+        {
+            <p class="text-muted">Teacher remarks: Review learners marked as needing support and follow up on missing work.</p>
+        }
     </div>
     <div class="report-summary-grid">
         <div><strong>@Model?.TotalRows</strong><span>Rows</span></div>

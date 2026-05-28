@@ -12,10 +12,14 @@ namespace EduTrackAnalytics.Controllers;
 public class LessonsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly IWebHostEnvironment _environment;
+    private static readonly string[] AllowedMaterialExtensions = [".pdf", ".doc", ".docx", ".ppt", ".pptx", ".txt"];
+    private const long MaxMaterialFileSize = 10 * 1024 * 1024;
 
-    public LessonsController(ApplicationDbContext context)
+    public LessonsController(ApplicationDbContext context, IWebHostEnvironment environment)
     {
         _context = context;
+        _environment = environment;
     }
 
     public async Task<IActionResult> Index(int? courseId, string? search)
@@ -70,6 +74,40 @@ public class LessonsController : Controller
         return View(lesson);
     }
 
+    public async Task<IActionResult> Material(int id)
+    {
+        var lesson = await _context.Lessons.FirstOrDefaultAsync(l => l.LessonId == id);
+
+        if (lesson == null || string.IsNullOrWhiteSpace(lesson.FilePath))
+        {
+            return NotFound();
+        }
+
+        if (!await CanViewCourseAsync(lesson.CourseId))
+        {
+            return Forbid();
+        }
+
+        if (!lesson.FilePath.StartsWith("/uploads/lessons/", StringComparison.OrdinalIgnoreCase))
+        {
+            return Redirect(lesson.FilePath);
+        }
+
+        var relativePath = lesson.FilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var physicalPath = Path.Combine(_environment.WebRootPath, relativePath);
+
+        if (!System.IO.File.Exists(physicalPath))
+        {
+            return NotFound();
+        }
+
+        return PhysicalFile(
+            physicalPath,
+            lesson.ContentType ?? "application/octet-stream",
+            lesson.OriginalFileName ?? Path.GetFileName(physicalPath));
+    }
+
+
     [Authorize(Roles = "Admin,Teacher")]
     public async Task<IActionResult> Create(int? courseId)
     {
@@ -80,7 +118,7 @@ public class LessonsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin,Teacher")]
-    public async Task<IActionResult> Create(Lesson lesson)
+    public async Task<IActionResult> Create(Lesson lesson, IFormFile? materialFile)
     {
         if (!await CanModifyCourseAsync(lesson.CourseId))
         {
@@ -92,6 +130,8 @@ public class LessonsController : Controller
             ModelState.AddModelError(nameof(lesson.Title), "This course already has a lesson with this title.");
         }
 
+        ValidateMaterialFile(materialFile);
+
         if (!ModelState.IsValid)
         {
             await LoadCoursesAsync(lesson.CourseId);
@@ -102,9 +142,10 @@ public class LessonsController : Controller
 
         try
         {
+            await SaveMaterialFileAsync(lesson, materialFile);
             _context.Lessons.Add(lesson);
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Lecture added successfully.";
+            TempData["Success"] = "Lecture / Lesson added successfully.";
             return RedirectToAction(nameof(Index), new { lesson.CourseId });
         }
         catch (Exception)
@@ -137,7 +178,7 @@ public class LessonsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin,Teacher")]
-    public async Task<IActionResult> Edit(int id, Lesson lesson)
+    public async Task<IActionResult> Edit(int id, Lesson lesson, IFormFile? materialFile)
     {
         if (id != lesson.LessonId)
         {
@@ -161,18 +202,35 @@ public class LessonsController : Controller
             ModelState.AddModelError(nameof(lesson.Title), "This course already has a lesson with this title.");
         }
 
+        ValidateMaterialFile(materialFile);
+
         if (!ModelState.IsValid)
         {
             await LoadCoursesAsync(lesson.CourseId);
+            lesson.FilePath = existing.FilePath;
+            lesson.OriginalFileName = existing.OriginalFileName;
+            lesson.ContentType = existing.ContentType;
+            lesson.FileSize = existing.FileSize;
             return View(lesson);
         }
 
+        var postedFilePath = lesson.FilePath;
         lesson.DateCreated = existing.DateCreated;
+        lesson.FilePath = postedFilePath;
+        lesson.OriginalFileName = postedFilePath == existing.FilePath ? existing.OriginalFileName : null;
+        lesson.ContentType = postedFilePath == existing.FilePath ? existing.ContentType : null;
+        lesson.FileSize = postedFilePath == existing.FilePath ? existing.FileSize : null;
 
         try
         {
+            var previousFilePath = existing.FilePath;
+            await SaveMaterialFileAsync(lesson, materialFile);
             _context.Update(lesson);
             await _context.SaveChangesAsync();
+            if (materialFile != null || postedFilePath != existing.FilePath)
+            {
+                DeleteUploadedFile(previousFilePath, lesson.FilePath);
+            }
             TempData["Success"] = "Lecture / Lesson updated.";
             return RedirectToAction(nameof(Index), new { lesson.CourseId });
         }
@@ -223,6 +281,7 @@ public class LessonsController : Controller
         {
             _context.Lessons.Remove(lesson);
             await _context.SaveChangesAsync();
+            DeleteUploadedFile(lesson.FilePath, null);
             TempData["Success"] = "Lecture / Lesson deleted.";
         }
         catch (Exception)
@@ -266,5 +325,75 @@ public class LessonsController : Controller
         }
 
         ViewBag.Courses = new SelectList(await courses.ToListAsync(), "CourseId", "Title", selectedCourseId);
+    }
+
+    private void ValidateMaterialFile(IFormFile? materialFile)
+    {
+        if (materialFile == null || materialFile.Length == 0)
+        {
+            return;
+        }
+
+        var extension = Path.GetExtension(materialFile.FileName).ToLowerInvariant();
+
+        if (!AllowedMaterialExtensions.Contains(extension))
+        {
+            ModelState.AddModelError("materialFile", "Only PDF, Word, PowerPoint, and text files are allowed.");
+        }
+
+        if (materialFile.Length > MaxMaterialFileSize)
+        {
+            ModelState.AddModelError("materialFile", "File size must not exceed 10 MB.");
+        }
+    }
+
+    private async Task SaveMaterialFileAsync(Lesson lesson, IFormFile? materialFile)
+    {
+        if (materialFile == null || materialFile.Length == 0)
+        {
+            return;
+        }
+
+        var extension = Path.GetExtension(materialFile.FileName).ToLowerInvariant();
+        var uploadsRoot = Path.Combine(_environment.WebRootPath, "uploads", "lessons");
+        Directory.CreateDirectory(uploadsRoot);
+
+        var safeFileName = $"{Guid.NewGuid():N}{extension}";
+        var physicalPath = Path.Combine(uploadsRoot, safeFileName);
+
+        await using (var stream = System.IO.File.Create(physicalPath))
+        {
+            await materialFile.CopyToAsync(stream);
+        }
+
+        lesson.FilePath = $"/uploads/lessons/{safeFileName}";
+        lesson.OriginalFileName = Path.GetFileName(materialFile.FileName);
+        lesson.ContentType = materialFile.ContentType;
+        lesson.FileSize = materialFile.Length;
+    }
+
+    private void DeleteUploadedFile(string? oldFilePath, string? replacementFilePath)
+    {
+        if (string.IsNullOrWhiteSpace(oldFilePath) ||
+            oldFilePath == replacementFilePath ||
+            !oldFilePath.StartsWith("/uploads/lessons/", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        try
+        {
+            var relativePath = oldFilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var physicalPath = Path.Combine(_environment.WebRootPath, relativePath);
+
+            if (System.IO.File.Exists(physicalPath))
+            {
+                System.IO.File.Delete(physicalPath);
+            }
+        }
+        catch
+        {
+            // File cleanup should never block lesson deletion or replacement.
+        }
     }
 }

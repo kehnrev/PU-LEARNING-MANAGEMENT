@@ -1,9 +1,12 @@
 @model IEnumerable<Enrollment>
 @{
     ViewData["Title"] = "Course Completion Report";
+    var settings = ViewBag.ReportSettings as UserSettings;
+    var showPerformance = settings?.IncludePerformanceLabelsInReports ?? true;
+    var compact = settings?.CompactPrintLayout ?? false;
 }
 
-<section class="report-header">
+<section class="report-header @(compact ? "report-compact" : string.Empty)">
     <div>
         <span class="eyebrow">Printable report</span>
         <h1>Course Completion Report</h1>
@@ -23,15 +26,15 @@
     <button class="btn btn-primary" type="button" onclick="window.print()">Print</button>
 </form>
 
-<section class="panel">
+<section class="panel @(compact ? "report-compact" : string.Empty)">
     <div class="table-responsive">
         <table class="table align-middle">
-            <thead><tr><th>Course</th><th>Student</th><th>Teacher</th><th>Completion</th><th>Progress status</th><th>Enrolled</th></tr></thead>
+            <thead><tr><th>Course</th><th>Student</th><th>Teacher</th><th>Completion</th>@if (showPerformance) { <th>Progress status</th> }<th>Enrolled</th></tr></thead>
             <tbody>
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="6" class="text-center text-muted">No course completion data yet. Enroll students in courses to generate this report.</td>
+                        <td colspan="@(showPerformance ? 6 : 5)" class="text-center text-muted">No course completion data yet. Enroll students in courses to generate this report.</td>
                     </tr>
                 }
                 @foreach (var row in Model)
@@ -41,7 +44,10 @@
                         <td>@row.Student?.FullName</td>
                         <td>@row.Course?.Teacher?.FullName</td>
                         <td>@row.CompletionPercentage%</td>
-                        <td><span class="badge @PerformanceLabelHelper.GetBadgeClass(row.CompletionPercentage)">@PerformanceLabelHelper.GetLabel(row.CompletionPercentage)</span></td>
+                        @if (showPerformance)
+                        {
+                            <td><span class="badge @PerformanceLabelHelper.GetBadgeClass(row.CompletionPercentage)">@PerformanceLabelHelper.GetLabel(row.CompletionPercentage)</span></td>
+                        }
                         <td>@row.EnrollmentDate.ToLocalTime().ToString("MMM dd, yyyy")</td>
                     </tr>
                 }

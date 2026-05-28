@@ -21,6 +21,15 @@ public class Lesson
     [Display(Name = "File path")]
     public string? FilePath { get; set; }
 
+    [StringLength(255)]
+    [Display(Name = "Original file name")]
+    public string? OriginalFileName { get; set; }
+
+    [StringLength(120)]
+    public string? ContentType { get; set; }
+
+    public long? FileSize { get; set; }
+
     [Display(Name = "Available offline")]
     public bool IsAvailableOffline { get; set; }
 

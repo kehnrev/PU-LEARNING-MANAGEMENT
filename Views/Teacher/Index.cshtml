@@ -27,7 +27,7 @@
     <a class="btn btn-outline-primary" asp-controller="Announcements" asp-action="Create">Post Announcement</a>
 </div>
 
-<div class="stats-grid">
+<div class="stats-grid" data-dashboard-section="Pending Submissions">
     <div class="stat-card"><span>My courses</span><strong>@Model.MyCourses</strong></div>
     <div class="stat-card"><span>Students enrolled</span><strong>@Model.TotalStudentsEnrolled</strong></div>
     <div class="stat-card"><span>Total lessons</span><strong>@Model.TotalLessonsCreated</strong></div>
@@ -44,7 +44,7 @@
 </section>
 
 <div class="dashboard-grid">
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Class Performance">
         <h2>Class Average by Course</h2>
         @if (!Model.ClassAverageByCourse.Any())
         {
@@ -55,7 +55,7 @@
             <canvas class="analytics-chart" data-chart="horizontalBar" data-title="Class Average by Course" data-labels="@courseAverageLabels" data-full-labels="@courseAverageFullLabels" data-values="@courseAverageValues" data-scale-max="100" data-tooltip-label="Average" data-empty="No class score data yet. Students need to complete assessments before averages appear." height="320"></canvas>
         }
     </section>
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Students Needing Support">
         <h2>Students Needing Support</h2>
         @if (!Model.StudentsNeedingImprovement.Any())
         {
@@ -76,13 +76,13 @@
     </section>
 </div>
 
-<section class="panel mt-4">
+<section class="panel mt-4" data-dashboard-section="Pending Submissions">
     <h2>Assessment Submission Status</h2>
     <canvas class="analytics-chart" data-chart="doughnut" data-title="Assessment Submission Status" data-labels="@submissionLabels" data-values="@submissionValues" data-empty="No submission status data yet." height="260"></canvas>
 </section>
 
 <div class="dashboard-grid mt-4">
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Recent Submissions">
         <h2>Recent student submissions</h2>
         @if (!Model.RecentSubmissions.Any())
         {
@@ -109,7 +109,7 @@
         }
     </section>
 
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Upcoming Assessments">
         <h2>Upcoming assessments</h2>
         @if (!Model.UpcomingAssessments.Any())
         {

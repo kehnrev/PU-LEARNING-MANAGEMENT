@@ -19,8 +19,25 @@
         <span asp-validation-for="Content" class="text-danger"></span>
     </div>
     <div class="col-md-8">
-        <label asp-for="FilePath" class="form-label">Learning Material Link or File Path</label>
-        <input asp-for="FilePath" class="form-control" placeholder="/uploads/lesson.pdf" />
+        <label class="form-label" for="materialFile">Upload Learning Material</label>
+        <input class="form-control" id="materialFile" name="materialFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" />
+        <span class="text-danger" data-valmsg-for="materialFile"></span>
+        <div class="form-text">Optional. PDF, Word, PowerPoint, and text files only. Maximum size: 10 MB.</div>
+        @if (!string.IsNullOrWhiteSpace(Model.OriginalFileName) && !string.IsNullOrWhiteSpace(Model.FilePath))
+        {
+            <div class="current-material mt-2">
+                <strong>Current file:</strong>
+                <a asp-controller="Lessons" asp-action="Material" asp-route-id="@Model.LessonId" target="_blank" rel="noopener">@Model.OriginalFileName</a>
+                <span class="text-muted">Upload a new file to replace it.</span>
+            </div>
+        }
+    </div>
+    <div class="col-md-4">
+        <label asp-for="FilePath" class="form-label">Optional Learning Material Link</label>
+        <input asp-for="FilePath" class="form-control" placeholder="https://example.com/material.pdf" />
+        <input asp-for="OriginalFileName" type="hidden" />
+        <input asp-for="ContentType" type="hidden" />
+        <input asp-for="FileSize" type="hidden" />
         <span asp-validation-for="FilePath" class="text-danger"></span>
     </div>
     <div class="col-md-4 d-flex align-items-end">

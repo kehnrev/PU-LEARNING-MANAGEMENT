@@ -58,8 +58,14 @@ public class AccountController : Controller
         return RedirectToRoleDashboard(user.Role);
     }
 
-    public IActionResult Register()
+    public async Task<IActionResult> Register()
     {
+        if (!await IsStudentRegistrationEnabledAsync())
+        {
+            TempData["Error"] = "Student registration is currently disabled by the administrator.";
+            return RedirectToAction(nameof(Login));
+        }
+
         return View(new RegisterViewModel());
     }
 
@@ -67,6 +73,12 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
+        if (!await IsStudentRegistrationEnabledAsync())
+        {
+            ModelState.AddModelError(string.Empty, "Student registration is currently disabled by the administrator.");
+            return View(model);
+        }
+
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -150,5 +162,21 @@ public class AccountController : Controller
             UserRole.Teacher => RedirectToAction("Index", "Teacher"),
             _ => RedirectToAction("Index", "Student")
         };
+    }
+
+    private async Task<bool> IsStudentRegistrationEnabledAsync()
+    {
+        var adminIds = await _context.Users
+            .Where(u => u.Role == UserRole.Admin && u.IsActive)
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        if (adminIds.Count == 0)
+        {
+            return true;
+        }
+
+        return !await _context.UserSettings
+            .AnyAsync(s => adminIds.Contains(s.UserId) && !s.EnableStudentRegistration);
     }
 }

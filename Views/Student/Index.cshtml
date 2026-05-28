@@ -18,7 +18,7 @@
     <a class="btn btn-primary" asp-controller="Assessments" asp-action="Index">Take Assessment</a>
 </div>
 
-<div class="stats-grid">
+<div class="stats-grid" data-dashboard-section="Course Progress">
     <div class="stat-card"><span>Enrolled courses</span><strong>@Model.EnrolledCourses</strong></div>
     <div class="stat-card"><span>Upcoming assessments</span><strong>@Model.UpcomingAssessments</strong></div>
     <div class="stat-card"><span>Average score</span><strong>@Model.AverageScore.ToString("0.##")%</strong></div>
@@ -36,7 +36,7 @@
 </section>
 
 <div class="dashboard-grid">
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Course Progress">
         <h2>Course Progress Overview</h2>
         @if (!Model.CourseProgress.Any())
         {
@@ -47,7 +47,7 @@
             <canvas class="analytics-chart" data-chart="horizontalBar" data-title="Course Progress Overview" data-labels="@progressLabels" data-full-labels="@progressFullLabels" data-values="@progressValues" data-scale-max="100" data-tooltip-label="Progress" data-empty="No progress data yet. Complete lessons and assessments to generate your progress chart." height="320"></canvas>
         }
     </section>
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Upcoming Assessments">
         <h2>Upcoming assessments</h2>
         @if (!Model.Assessments.Any())
         {
@@ -69,7 +69,7 @@
 </div>
 
 <div class="dashboard-grid mt-4">
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Recent Scores">
         <h2>Recent Assessment Scores</h2>
         @if (!Model.RecentScores.Any())
         {
@@ -80,13 +80,13 @@
             <canvas class="analytics-chart" data-chart="bar" data-title="Assessment Score Summary" data-labels="@scoreLabels" data-full-labels="@scoreFullLabels" data-values="@scoreValues" data-scale-max="100" data-tooltip-label="Score" data-empty="No assessment scores yet. Complete an assessment to see your score trend." height="260"></canvas>
         }
     </section>
-    <section class="panel">
+    <section class="panel" data-dashboard-section="Offline Lessons">
         <h2>Completion Status</h2>
         <canvas class="analytics-chart" data-chart="doughnut" data-title="Completion Status" data-labels="Completed,Remaining" data-values="@Model.CompletedAssessments,@Model.RemainingAssessments" data-empty="No completion data yet. Start an assessment to build your completion status." height="260"></canvas>
     </section>
 </div>
 
-<section class="panel mt-4">
+<section class="panel mt-4" data-dashboard-section="Recent Scores">
     <h2>Recent scores</h2>
     @if (!Model.RecentScores.Any())
     {

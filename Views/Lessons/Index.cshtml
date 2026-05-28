@@ -32,13 +32,23 @@ else
 {
     <div class="table-responsive panel">
         <table class="table align-middle">
-            <thead><tr><th>Title</th><th>Course</th><th>Offline</th><th>Date</th><th></th></tr></thead>
+            <thead><tr><th>Title</th><th>Course</th><th>Material</th><th>Offline</th><th>Date</th><th></th></tr></thead>
             <tbody>
                 @foreach (var lesson in Model)
                 {
                     <tr>
                         <td>@lesson.Title</td>
                         <td>@lesson.Course?.Title</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(lesson.FilePath))
+                            {
+                                <a class="btn btn-sm btn-outline-primary" asp-action="Material" asp-route-id="@lesson.LessonId" target="_blank" rel="noopener">View Material</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No file</span>
+                            }
+                        </td>
                         <td><span class="badge @(lesson.IsAvailableOffline ? "text-bg-success" : "text-bg-secondary")">@(lesson.IsAvailableOffline ? "Available Offline" : "Online Only")</span></td>
                         <td>@lesson.DateCreated.ToLocalTime().ToString("MMM dd, yyyy")</td>
                         <td class="text-end">

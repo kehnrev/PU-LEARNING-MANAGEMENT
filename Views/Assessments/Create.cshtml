@@ -12,6 +12,16 @@
 </div>
 
 <section class="panel form-panel">
+    @if (User.IsInRole("Teacher") && ViewBag.DefaultPassingScore != null)
+    {
+        <div class="alert alert-info">
+            <strong>Teacher defaults applied:</strong>
+            Passing score @ViewBag.DefaultPassingScore%,
+            duration @ViewBag.DefaultAssessmentDuration minutes,
+            late submissions @(ViewBag.AllowLateSubmissions == true ? "allowed" : "not allowed"),
+            scores @(ViewBag.AutoPublishScores == true ? "auto-published" : "held for review").
+        </div>
+    }
     <form asp-action="Create" method="post" novalidate>
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <partial name="_AssessmentForm" model="Model" />

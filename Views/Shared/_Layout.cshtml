@@ -8,6 +8,18 @@
     var sidebarState = UserSettings.DefaultSidebarState;
     var fontSize = UserSettings.DefaultFontSize;
     var cardStyle = UserSettings.DefaultCardStyle;
+    var highContrastMode = false;
+    var reduceAnimations = false;
+    var readableSpacing = true;
+    var showOfflineBanner = true;
+    var autoSyncWhenOnline = true;
+    var showSyncSuccessMessage = true;
+    var enableOfflineSyncNotifications = true;
+    var lowDataMode = false;
+    var enableOfflineMode = true;
+    var studentDashboardPriority = UserSettings.DefaultStudentDashboardPriority;
+    var teacherDashboardPriority = UserSettings.DefaultTeacherDashboardPriority;
+    var adminDashboardPriority = UserSettings.DefaultAdminDashboardPriority;
 
     if (User.Identity?.IsAuthenticated ?? false)
     {
@@ -26,6 +38,18 @@
                     sidebarState = settings.SidebarState;
                     fontSize = settings.FontSize;
                     cardStyle = settings.CardStyle;
+                    highContrastMode = settings.HighContrastMode;
+                    reduceAnimations = settings.ReduceAnimations;
+                    readableSpacing = settings.ReadableSpacing;
+                    showOfflineBanner = settings.ShowOfflineBanner;
+                    autoSyncWhenOnline = settings.AutoSyncWhenOnline;
+                    showSyncSuccessMessage = settings.ShowSyncSuccessMessage;
+                    enableOfflineSyncNotifications = settings.EnableOfflineSyncNotifications;
+                    lowDataMode = settings.LowDataMode;
+                    enableOfflineMode = settings.EnableOfflineMode;
+                    studentDashboardPriority = settings.StudentDashboardPriority;
+                    teacherDashboardPriority = settings.TeacherDashboardPriority;
+                    adminDashboardPriority = settings.AdminDashboardPriority;
                 }
             }
         }
@@ -51,7 +75,19 @@
             layoutStyle: "@layoutStyle",
             sidebarState: "@sidebarState",
             fontSize: "@fontSize",
-            cardStyle: "@cardStyle"
+            cardStyle: "@cardStyle",
+            highContrastMode: @highContrastMode.ToString().ToLowerInvariant(),
+            reduceAnimations: @reduceAnimations.ToString().ToLowerInvariant(),
+            readableSpacing: @readableSpacing.ToString().ToLowerInvariant(),
+            showOfflineBanner: @showOfflineBanner.ToString().ToLowerInvariant(),
+            autoSyncWhenOnline: @autoSyncWhenOnline.ToString().ToLowerInvariant(),
+            showSyncSuccessMessage: @showSyncSuccessMessage.ToString().ToLowerInvariant(),
+            enableOfflineSyncNotifications: @enableOfflineSyncNotifications.ToString().ToLowerInvariant(),
+            lowDataMode: @lowDataMode.ToString().ToLowerInvariant(),
+            enableOfflineMode: @enableOfflineMode.ToString().ToLowerInvariant(),
+            studentDashboardPriority: "@studentDashboardPriority",
+            teacherDashboardPriority: "@teacherDashboardPriority",
+            adminDashboardPriority: "@adminDashboardPriority"
         };
 
         (function () {
@@ -60,7 +96,19 @@
                 layoutStyle: "Comfortable",
                 sidebarState: "Expanded",
                 fontSize: "Medium",
-                cardStyle: "Default"
+                cardStyle: "Default",
+                highContrastMode: false,
+                reduceAnimations: false,
+                readableSpacing: true,
+                showOfflineBanner: true,
+                autoSyncWhenOnline: true,
+                showSyncSuccessMessage: true,
+                enableOfflineSyncNotifications: true,
+                lowDataMode: false,
+                enableOfflineMode: true,
+                studentDashboardPriority: "Upcoming Assessments",
+                teacherDashboardPriority: "Students Needing Support",
+                adminDashboardPriority: "System Statistics"
             };
 
             let saved = {};
@@ -81,6 +129,10 @@
             root.dataset.sidebarState = String(settings.sidebarState || "Expanded").toLowerCase();
             root.dataset.fontSize = String(settings.fontSize || "Medium").toLowerCase();
             root.dataset.cardStyle = String(settings.cardStyle || "Default").toLowerCase();
+            root.dataset.highContrast = settings.highContrastMode === true ? "true" : "false";
+            root.dataset.reduceAnimations = settings.reduceAnimations === true ? "true" : "false";
+            root.dataset.readableSpacing = settings.readableSpacing === false ? "false" : "true";
+            root.dataset.lowDataMode = settings.lowDataMode === true ? "true" : "false";
         })();
     </script>
     <script type="importmap"></script>
@@ -89,10 +141,10 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="icon" type="image/svg+xml" href="~/images/icon.svg" />
 </head>
-<body data-authenticated="@((User.Identity?.IsAuthenticated ?? false).ToString().ToLowerInvariant())">
+<body data-authenticated="@((User.Identity?.IsAuthenticated ?? false).ToString().ToLowerInvariant())" data-role="@(User.IsInRole("Admin") ? "Admin" : User.IsInRole("Teacher") ? "Teacher" : User.IsInRole("Student") ? "Student" : "Public")">
     <div id="connectionBanner" class="connection-banner online">Online Mode</div>
     <header class="site-header">
-        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+        <nav class="navbar navbar-expand-lg navbar-light border-bottom">
             <div class="container-fluid">
                 <a class="navbar-brand brand-mark" asp-controller="Home" asp-action="Index">
                     <span class="brand-icon">ET</span>
@@ -170,6 +222,7 @@
                 }
             </aside>
             <main role="main" class="app-main">
+                <button type="button" class="btn btn-outline-primary sidebar-toggle no-print" id="sidebarToggle" aria-label="Toggle dashboard menu">Hide Menu</button>
                 <partial name="_Alerts" />
                 @RenderBody()
             </main>

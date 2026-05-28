@@ -1,13 +1,19 @@
 @model AppearanceSettingsViewModel
 @{
     ViewData["Title"] = "Appearance Settings";
+    var dashboardOptions = User.IsInRole("Admin")
+        ? UserSettings.AdminDashboardPriorities
+        : User.IsInRole("Teacher") ? UserSettings.TeacherDashboardPriorities : UserSettings.StudentDashboardPriorities;
+    var dashboardField = User.IsInRole("Admin")
+        ? nameof(Model.AdminDashboardPriority)
+        : User.IsInRole("Teacher") ? nameof(Model.TeacherDashboardPriority) : nameof(Model.StudentDashboardPriority);
 }
 
 <div class="dashboard-heading">
     <div>
         <span class="eyebrow">User settings</span>
         <h1>Appearance Settings</h1>
-        <p>Customize your learning workspace for better readability and comfort.</p>
+        <p>Customize your learning workspace for better readability, notifications, offline learning, reports, and daily workflow.</p>
     </div>
 </div>
 
@@ -15,7 +21,27 @@
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <section class="settings-section">
-        <h2>Theme Mode</h2>
+        <h2>Account</h2>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" readonly />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Role" class="form-label"></label>
+                <input asp-for="Role" class="form-control" readonly />
+            </div>
+        </div>
+        <p class="form-text">Password changes can be handled by the administrator for this demo build.</p>
+    </section>
+
+    <section class="settings-section">
+        <h2>Appearance and Accessibility</h2>
         <div class="option-grid">
             @foreach (var item in UserSettings.ThemeModes)
             {
@@ -27,10 +53,19 @@
             }
         </div>
         <span asp-validation-for="ThemeMode" class="text-danger"></span>
-    </section>
 
-    <section class="settings-section">
-        <h2>Layout Style</h2>
+        <div class="option-grid">
+            @foreach (var item in UserSettings.FontSizes)
+            {
+                <label class="option-card">
+                    <input asp-for="FontSize" type="radio" value="@item" />
+                    <strong>@item font</strong>
+                    <span>@(item == "Large" ? "Increase readability for longer study sessions." : item == "Small" ? "Show more information on screen." : "Use the balanced default size.")</span>
+                </label>
+            }
+        </div>
+        <span asp-validation-for="FontSize" class="text-danger"></span>
+
         <div class="option-grid two">
             @foreach (var item in UserSettings.LayoutStyles)
             {
@@ -42,40 +77,19 @@
             }
         </div>
         <span asp-validation-for="LayoutStyle" class="text-danger"></span>
-    </section>
 
-    <section class="settings-section">
-        <h2>Sidebar Preference</h2>
         <div class="option-grid two">
             @foreach (var item in UserSettings.SidebarStates)
             {
                 <label class="option-card">
                     <input asp-for="SidebarState" type="radio" value="@item" />
                     <strong>@item Sidebar</strong>
-                    <span>@(item == "Collapsed" ? "Keep navigation narrow while working." : "Show the full sidebar navigation labels.")</span>
+                    <span>@(item == "Hidden" ? "Hide the dashboard menu until you open it again." : item == "Collapsed" ? "Keep navigation narrow while working." : "Show the full sidebar navigation labels.")</span>
                 </label>
             }
         </div>
         <span asp-validation-for="SidebarState" class="text-danger"></span>
-    </section>
 
-    <section class="settings-section">
-        <h2>Font Size</h2>
-        <div class="option-grid">
-            @foreach (var item in UserSettings.FontSizes)
-            {
-                <label class="option-card">
-                    <input asp-for="FontSize" type="radio" value="@item" />
-                    <strong>@item</strong>
-                    <span>@(item == "Large" ? "Increase readability for longer study sessions." : item == "Small" ? "Show more information on screen." : "Use the balanced default size.")</span>
-                </label>
-            }
-        </div>
-        <span asp-validation-for="FontSize" class="text-danger"></span>
-    </section>
-
-    <section class="settings-section">
-        <h2>Dashboard Card Style</h2>
         <div class="option-grid two">
             @foreach (var item in UserSettings.CardStyles)
             {
@@ -87,7 +101,140 @@
             }
         </div>
         <span asp-validation-for="CardStyle" class="text-danger"></span>
+
+        <div class="option-grid">
+            <label class="option-card">
+                <input asp-for="HighContrastMode" type="checkbox" />
+                <strong>High Contrast Mode</strong>
+                <span>Increase contrast for text, borders, and important controls.</span>
+            </label>
+            <label class="option-card">
+                <input asp-for="ReduceAnimations" type="checkbox" />
+                <strong>Reduce Animations</strong>
+                <span>Minimize motion for a calmer learning experience.</span>
+            </label>
+            <label class="option-card">
+                <input asp-for="ReadableSpacing" type="checkbox" />
+                <strong>Readable Spacing</strong>
+                <span>Add comfortable spacing for longer lessons and reports.</span>
+            </label>
+        </div>
     </section>
+
+    <section class="settings-section">
+        <h2>Notifications</h2>
+        <div class="option-grid">
+            <label class="option-card"><input asp-for="EnableAssessmentReminders" type="checkbox" /><strong>Assessment reminders</strong><span>Remind learners before due dates.</span></label>
+            <label class="option-card"><input asp-for="EnableNewLessonNotifications" type="checkbox" /><strong>New lesson notifications</strong><span>Show alerts when learning materials are posted.</span></label>
+            <label class="option-card"><input asp-for="EnableScoreNotifications" type="checkbox" /><strong>Score release notifications</strong><span>Notify learners when scores are available.</span></label>
+            <label class="option-card"><input asp-for="EnableAnnouncementNotifications" type="checkbox" /><strong>Announcement notifications</strong><span>Keep users aware of important school updates.</span></label>
+            <label class="option-card"><input asp-for="EnableOfflineSyncNotifications" type="checkbox" /><strong>Offline sync notifications</strong><span>Show sync status after offline work is submitted.</span></label>
+        </div>
+        <label asp-for="ReminderTiming" class="form-label"></label>
+        <select asp-for="ReminderTiming" class="form-select">
+            @foreach (var item in UserSettings.ReminderTimings)
+            {
+                <option value="@item">@item</option>
+            }
+        </select>
+        <span asp-validation-for="ReminderTiming" class="text-danger"></span>
+    </section>
+
+    <section class="settings-section">
+        <h2>Offline Learning</h2>
+        <div class="option-grid">
+            <label class="option-card"><input asp-for="AutoSaveOfflineLessons" type="checkbox" /><strong>Auto-save offline lessons</strong><span>Keep offline-ready lessons easy to save on this device.</span></label>
+            <label class="option-card"><input asp-for="ShowOfflineBanner" type="checkbox" /><strong>Show offline mode banner</strong><span>Display Online Mode and Offline Mode at the top of the page.</span></label>
+            <label class="option-card"><input asp-for="AutoSyncWhenOnline" type="checkbox" /><strong>Sync when online</strong><span>Automatically submit pending offline answers.</span></label>
+            <label class="option-card"><input asp-for="ShowSyncSuccessMessage" type="checkbox" /><strong>Show sync success message</strong><span>Confirm when offline submissions are synced.</span></label>
+            <label class="option-card"><input asp-for="LowDataMode" type="checkbox" /><strong>Prefer low-data mode</strong><span>Reduce nonessential visual effects while studying online.</span></label>
+        </div>
+    </section>
+
+    <section class="settings-section">
+        <h2>Dashboard</h2>
+        <label class="form-label" for="@dashboardField">Priority section</label>
+        <select id="@dashboardField" name="@dashboardField" class="form-select">
+            @foreach (var item in dashboardOptions)
+            {
+                var selected = User.IsInRole("Admin")
+                    ? Model.AdminDashboardPriority == item
+                    : User.IsInRole("Teacher") ? Model.TeacherDashboardPriority == item : Model.StudentDashboardPriority == item;
+
+                if (selected)
+                {
+                    <option value="@item" selected>@item</option>
+                }
+                else
+                {
+                    <option value="@item">@item</option>
+                }
+            }
+        </select>
+        <p class="form-text">The selected section is prioritized on your dashboard when a matching dashboard panel exists.</p>
+    </section>
+
+    @if (User.IsInRole("Teacher"))
+    {
+        <section class="settings-section">
+            <h2>Teacher Preferences</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="DefaultPassingScore" class="form-label"></label>
+                    <input asp-for="DefaultPassingScore" class="form-control" type="number" min="1" max="100" />
+                    <span asp-validation-for="DefaultPassingScore" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="DefaultAssessmentDuration" class="form-label"></label>
+                    <input asp-for="DefaultAssessmentDuration" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="DefaultAssessmentDuration" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="option-grid">
+                <label class="option-card"><input asp-for="AllowLateSubmissions" type="checkbox" /><strong>Allow late submissions</strong><span>Use this as the default grading policy for new assessments.</span></label>
+                <label class="option-card"><input asp-for="ShowCorrectAnswersAfterSubmission" type="checkbox" /><strong>Show correct answers</strong><span>Let students review correct answers after submitting.</span></label>
+                <label class="option-card"><input asp-for="AutoPublishScores" type="checkbox" /><strong>Auto-publish scores</strong><span>Release scores immediately after auto-scoring.</span></label>
+            </div>
+        </section>
+    }
+
+    <section class="settings-section">
+        <h2>Reports</h2>
+        <div class="option-grid">
+            <label class="option-card"><input asp-for="IncludePerformanceLabelsInReports" type="checkbox" /><strong>Include performance labels</strong><span>Show Excellent, Good, Needs Improvement, or At Risk.</span></label>
+            <label class="option-card"><input asp-for="IncludeMissingSubmissionsInReports" type="checkbox" /><strong>Include missing submissions</strong><span>Keep missing work visible in report notes.</span></label>
+            <label class="option-card"><input asp-for="IncludeTeacherRemarksInReports" type="checkbox" /><strong>Include teacher remarks</strong><span>Add a simple remarks note for printed reports.</span></label>
+            <label class="option-card"><input asp-for="CompactPrintLayout" type="checkbox" /><strong>Compact print layout</strong><span>Use tighter spacing for printed reports.</span></label>
+            <label class="option-card"><input asp-for="AlwaysPrintReportsInLightMode" type="checkbox" /><strong>Always print in light mode</strong><span>Keep printed reports clean even when dark mode is enabled.</span></label>
+        </div>
+    </section>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <section class="settings-section">
+            <h2>Admin System</h2>
+            <div class="option-grid">
+                <label class="option-card"><input asp-for="EnableStudentRegistration" type="checkbox" /><strong>Enable student registration</strong><span>Allow public student sign-ups from the registration page.</span></label>
+                <label class="option-card"><input asp-for="EnableOfflineMode" type="checkbox" /><strong>Enable offline mode</strong><span>Keep PWA offline features available for this admin workspace.</span></label>
+                <label class="option-card"><input asp-for="EnableDemoDataNotice" type="checkbox" /><strong>Enable demo data notice</strong><span>Show presentation demo notices where applicable.</span></label>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="ActiveSchoolYear" class="form-label"></label>
+                    <input asp-for="ActiveSchoolYear" class="form-control" />
+                    <span asp-validation-for="ActiveSchoolYear" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ActiveSemester" class="form-label"></label>
+                    <input asp-for="ActiveSemester" class="form-control" />
+                    <span asp-validation-for="ActiveSemester" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="alert alert-info mb-0">
+                Demo reset can be performed by running the seed command or restarting with a clean database.
+            </div>
+        </section>
+    }
 
     <div class="button-row">
         <button class="btn btn-primary" type="submit">Save Settings</button>

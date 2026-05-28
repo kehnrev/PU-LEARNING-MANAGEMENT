@@ -50,7 +50,7 @@ Extra sample student accounts are seeded for class analytics and reports, includ
 ## System Roles
 
 - Admin: manage users, courses, enrollments, announcements, reports, and system-wide analytics.
-- Teacher: manage courses, lessons, assessments, questions, submissions, announcements, and class analytics.
+- Teacher: manage courses, lessons, uploaded learning materials, assessments, questions, submissions, announcements, and class analytics.
 - Student: view enrolled courses, lessons, assessments, scores, offline library, announcements, settings, and reports.
 
 ## Demo Data Included
@@ -80,8 +80,10 @@ Announcements included:
 - Offline Learning Library for lessons and assessments.
 - Auto-score feedback with score, percentage, passed/failed status, performance label, and recommendation.
 - Better empty-state guidance across courses, lessons, assessments, scores, and reports.
-- Teacher quick actions: Create Course, Add Lesson, Create Assessment, View Reports, and Post Announcement.
+- Teacher quick actions: Create Course, Add Lecture / Lesson, Create Assessment, View Reports, and Post Announcement.
 - Notification-style dashboard messages for assessments, lessons, scores, announcements, and offline sync.
+- Teachers can upload PDF, Word, PowerPoint, and text learning materials for lessons.
+- Users can hide or show the dashboard sidebar; the preference is saved locally for convenience.
 
 ## Appearance Settings
 
@@ -96,6 +98,19 @@ Available options:
 - Dashboard Card Style: Default cards, Minimal cards
 
 Settings are saved per user in the database and also stored in localStorage so the selected appearance loads quickly and still works while offline.
+
+The dashboard menu can also be hidden or shown from any authenticated page. The sidebar state is saved in localStorage and synced to `UserSettings.SidebarState` when possible.
+
+## Learning Material Uploads
+
+Teachers can attach learning materials when adding or editing a Lecture / Lesson.
+
+- Supported files: `.pdf`, `.doc`, `.docx`, `.ppt`, `.pptx`, `.txt`
+- Maximum size: 10 MB
+- Storage folder: `wwwroot/uploads/lessons`
+- Uploaded files use safe unique filenames to avoid overwriting files.
+- Students can open lesson details and use the View Material button to view or download the uploaded file.
+- Offline-ready lessons still show the Available Offline badge. Students should download attached materials while online if they need offline access.
 
 ## Chart and Analytics Improvements
 

@@ -28,13 +28,17 @@ public class AdminController : Controller
 
     public async Task<IActionResult> Index()
     {
+        var settings = await _context.UserSettings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.UserId == User.GetUserId()) ?? UserSettings.CreateDefault(User.GetUserId());
+
         var enrollmentSummary = await _context.Courses
             .Include(c => c.Enrollments)
             .OrderBy(c => c.Title)
             .ToDictionaryAsync(c => c.Title, c => c.Enrollments.Count);
 
-        var passed = await _context.Submissions.CountAsync(s => s.Score >= 75);
-        var needsSupport = await _context.Submissions.CountAsync(s => s.Score < 75);
+        var passed = await _context.Submissions.CountAsync(s => s.Score >= settings.DefaultPassingScore);
+        var needsSupport = await _context.Submissions.CountAsync(s => s.Score < settings.DefaultPassingScore);
 
         var model = new AdminDashboardViewModel
         {
@@ -57,6 +61,7 @@ public class AdminController : Controller
             }
         };
 
+        ViewBag.ShowDemoDataNotice = settings.EnableDemoDataNotice;
         return View(model);
     }
 
