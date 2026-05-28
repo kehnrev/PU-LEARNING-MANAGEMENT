@@ -7,7 +7,8 @@
     <div class="auth-card">
         <span class="eyebrow">Student registration</span>
         <h1>Create your EduTrack account</h1>
-        <form asp-action="Register" method="post" novalidate>
+        <form asp-controller="Account" asp-action="Register" method="post" novalidate>
+            @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="mb-3">
                 <label asp-for="FullName" class="form-label"></label>

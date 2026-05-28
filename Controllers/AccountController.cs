@@ -44,7 +44,18 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email && u.IsActive);
+        ApplicationUser? user;
+
+        try
+        {
+            user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email && u.IsActive);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Login failed because the user database could not be reached.");
+            ModelState.AddModelError(string.Empty, GetDatabaseSetupMessage());
+            return View(model);
+        }
 
         if (user == null ||
             _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.Password) == PasswordVerificationResult.Failed)
@@ -74,7 +85,15 @@ public class AccountController : Controller
 
     public async Task<IActionResult> Register()
     {
-        if (!await IsStudentRegistrationEnabledAsync())
+        var registrationStatus = await GetStudentRegistrationStatusAsync();
+
+        if (!string.IsNullOrWhiteSpace(registrationStatus.ErrorMessage))
+        {
+            ModelState.AddModelError(string.Empty, registrationStatus.ErrorMessage);
+            return View(new RegisterViewModel());
+        }
+
+        if (!registrationStatus.IsEnabled)
         {
             TempData["Error"] = "Student registration is currently disabled by the administrator.";
             return RedirectToAction(nameof(Login));
@@ -87,7 +106,15 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
-        if (!await IsStudentRegistrationEnabledAsync())
+        var registrationStatus = await GetStudentRegistrationStatusAsync();
+
+        if (!string.IsNullOrWhiteSpace(registrationStatus.ErrorMessage))
+        {
+            ModelState.AddModelError(string.Empty, registrationStatus.ErrorMessage);
+            return View(model);
+        }
+
+        if (!registrationStatus.IsEnabled)
         {
             ModelState.AddModelError(string.Empty, "Student registration is currently disabled by the administrator.");
             return View(model);
@@ -98,9 +125,18 @@ public class AccountController : Controller
             return View(model);
         }
 
-        if (await _context.Users.AnyAsync(u => u.Email == model.Email))
+        try
         {
-            ModelState.AddModelError(nameof(model.Email), "This email is already registered.");
+            if (await _context.Users.AnyAsync(u => u.Email == model.Email))
+            {
+                ModelState.AddModelError(nameof(model.Email), "This email is already registered.");
+                return View(model);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Registration failed while checking duplicate email {Email}.", model.Email);
+            ModelState.AddModelError(string.Empty, GetDatabaseSetupMessage());
             return View(model);
         }
 
@@ -200,19 +236,34 @@ public class AccountController : Controller
         };
     }
 
-    private async Task<bool> IsStudentRegistrationEnabledAsync()
+    private async Task<(bool IsEnabled, string? ErrorMessage)> GetStudentRegistrationStatusAsync()
     {
-        var adminIds = await _context.Users
-            .Where(u => u.Role == UserRole.Admin && u.IsActive)
-            .Select(u => u.Id)
-            .ToListAsync();
-
-        if (adminIds.Count == 0)
+        try
         {
-            return true;
-        }
+            var adminIds = await _context.Users
+                .Where(u => u.Role == UserRole.Admin && u.IsActive)
+                .Select(u => u.Id)
+                .ToListAsync();
 
-        return !await _context.UserSettings
-            .AnyAsync(s => adminIds.Contains(s.UserId) && !s.EnableStudentRegistration);
+            if (adminIds.Count == 0)
+            {
+                return (true, null);
+            }
+
+            var isDisabled = await _context.UserSettings
+                .AnyAsync(s => adminIds.Contains(s.UserId) && !s.EnableStudentRegistration);
+
+            return (!isDisabled, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Student registration settings could not be loaded.");
+            return (false, GetDatabaseSetupMessage());
+        }
+    }
+
+    private static string GetDatabaseSetupMessage()
+    {
+        return "Registration is temporarily unavailable because the database could not be reached. Run 'dotnet ef database update' and check the SQL Server connection string, then try again.";
     }
 }

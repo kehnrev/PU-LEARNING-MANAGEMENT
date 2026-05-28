@@ -230,7 +230,7 @@ http://localhost:5107
 
 ## Database Connection
 
-The project uses SQL Server Express for local development.
+The project uses SQL Server / LocalDB for local development.
 
 The default connection string is in:
 
@@ -238,13 +238,17 @@ The default connection string is in:
 appsettings.Development.json
 ```
 
-Example:
+Default example for a clean clone:
 
 ```json
-"Server=KehnPC\\SQLEXPRESS;Database=EduTrackAnalyticsDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true;"
+"Server=(localdb)\\mssqllocaldb;Database=EduTrackAnalyticsDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true;"
 ```
 
-If your SQL Server name is different, update the connection string before running the database migration.
+If your computer uses SQL Express instead of LocalDB, update the connection string before running the database migration. Example:
+
+```json
+"Server=YOUR-PC\\SQLEXPRESS;Database=EduTrackAnalyticsDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true;"
+```
 
 ---
 
@@ -298,6 +302,14 @@ dotnet ef database update
 ```
 
 Then restart the app.
+
+If `/Account/Register` shows **ERROR 500** or says registration is temporarily unavailable, the database is usually not migrated yet or the SQL Server connection string does not match the computer. Run:
+
+```powershell
+dotnet ef database update
+```
+
+Then check `appsettings.Development.json` and confirm the `DefaultConnection` points to an available SQL Server / LocalDB instance.
 
 If CSS or dark mode changes do not appear, do a hard refresh:
 
