@@ -268,9 +268,14 @@
 
       const update = () => {
         const isVisible = input.type === "text";
-        button.textContent = isVisible ? "Hide" : "Show";
         button.setAttribute("aria-label", isVisible ? "Hide password" : "Show password");
         button.setAttribute("aria-pressed", isVisible ? "true" : "false");
+        button.classList.toggle("is-visible", isVisible);
+
+        const label = button.querySelector(".password-toggle-label");
+        if (label) {
+          label.textContent = isVisible ? "Hide password" : "Show password";
+        }
       };
 
       button.addEventListener("click", () => {
