@@ -171,6 +171,7 @@
                             <a class="btn btn-outline-primary btn-sm" asp-controller="@dashboardController" asp-action="Index">Dashboard</a>
                             <span class="user-chip">@User.Identity?.Name</span>
                             <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-primary btn-sm">Logout</button>
                             </form>
                         }

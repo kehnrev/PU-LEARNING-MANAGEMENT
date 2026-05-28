@@ -50,6 +50,38 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        return View(new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+            StatusCode = 500,
+            Title = "Something went wrong",
+            Message = "Something went wrong. Please go back to the dashboard or try again."
+        });
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult HttpStatus(int code)
+    {
+        var title = code switch
+        {
+            400 => "Bad request",
+            404 => "Page not found",
+            _ => "Request error"
+        };
+
+        var message = code switch
+        {
+            400 => "The request could not be processed. Please refresh the page and try again.",
+            404 => "The page you are looking for was not found.",
+            _ => "Something went wrong. Please go back to the dashboard or try again."
+        };
+
+        return View("Error", new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+            StatusCode = code,
+            Title = title,
+            Message = message
+        });
     }
 }

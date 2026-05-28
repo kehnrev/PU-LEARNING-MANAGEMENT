@@ -15,11 +15,16 @@ public class AccountController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly IPasswordHasher<ApplicationUser> _passwordHasher;
+    private readonly ILogger<AccountController> _logger;
 
-    public AccountController(ApplicationDbContext context, IPasswordHasher<ApplicationUser> passwordHasher)
+    public AccountController(
+        ApplicationDbContext context,
+        IPasswordHasher<ApplicationUser> passwordHasher,
+        ILogger<AccountController> logger)
     {
         _context = context;
         _passwordHasher = passwordHasher;
+        _logger = logger;
     }
 
     public IActionResult Login(string? returnUrl = null)
@@ -48,7 +53,16 @@ public class AccountController : Controller
             return View(model);
         }
 
-        await SignInAsync(user, model.RememberMe);
+        try
+        {
+            await SignInAsync(user, model.RememberMe);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Login failed while signing in user {Email}.", user.Email);
+            ModelState.AddModelError(string.Empty, "We could not sign you in right now. Please try again.");
+            return View(model);
+        }
 
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
         {
@@ -109,20 +123,41 @@ public class AccountController : Controller
             TempData["Success"] = "Your student account is ready. Welcome to EduTrack.";
             return RedirectToAction("Index", "Student");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Registration failed for email {Email}.", model.Email);
             ModelState.AddModelError(string.Empty, "We could not create your account right now. Please try again.");
             return View(model);
         }
     }
 
     [Authorize]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpGet]
     public async Task<IActionResult> Logout()
     {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        TempData["Success"] = "You have been logged out.";
+        return await SignOutAndRedirectAsync();
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ActionName("Logout")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> LogoutPost()
+    {
+        return await SignOutAndRedirectAsync();
+    }
+
+    private async Task<IActionResult> SignOutAndRedirectAsync()
+    {
+        try
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Logout failed while clearing the authentication cookie.");
+        }
+
         return RedirectToAction("Index", "Home");
     }
 
